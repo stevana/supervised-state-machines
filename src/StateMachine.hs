@@ -1,21 +1,27 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module StateMachine where
 
+import Control.DeepSeq
 import Control.Exception
 import Data.ByteString (ByteString)
 import Data.String (IsString)
 import Data.Typeable
+import GHC.Generics (Generic)
 import System.Timeout
-import Control.DeepSeq
 
 import Codec
 
 ------------------------------------------------------------------------
 
 newtype Name = Name { unName :: String }
-  deriving (Eq, Ord, Show, IsString)
+  deriving newtype (Eq, Ord, Show, IsString)
+  deriving stock Generic
+  deriving anyclass NFData
 
 newtype SM s i o = SM { runSM :: i -> s -> (s, o) }
 
@@ -27,27 +33,27 @@ data SomeSM = forall s i o. (Typeable s, Typeable i, Typeable o, NFData s, NFDat
   , ssmTerminate :: Name -> s -> IO ()
   }
 
+instance NFData SomeSM where
+  rnf (SomeSM _f s _codec _init _stop) = rnf s
+
 data StepError
   = InputTypeMismatch
   | OutputTypeMismatch
-  | Exception SomeException
   | DecodeError ByteString
-  deriving Show
+  deriving stock (Show, Generic)
+  deriving anyclass NFData
 
-instance Exception StepError
-
-stepSM :: (Typeable i, Typeable o) => i -> SomeSM -> IO (SomeSM, Either StepError o)
+stepSM :: (Typeable i, Typeable o) => i -> SomeSM -> (SomeSM, Either StepError o)
 stepSM mi ssm@(SomeSM (SM f) s _codec _init _stop) =
   case cast mi of
-    Nothing -> return (ssm, Left InputTypeMismatch)
-    Just i  -> do
-      r <- try (evaluate (force (f i s)))
-      case r of
-        Left err       -> return (ssm, Left err)
-        Right (s', mo) ->
-          case cast mo of
-            Nothing -> return (ssm, Left OutputTypeMismatch)
-            Just o  -> return ((SomeSM (SM f) s' _codec _init _stop), Right o)
+    Nothing -> (ssm, Left InputTypeMismatch)
+    Just i  ->
+      let
+        (s', mo) = f i s
+      in
+        case cast mo of
+          Nothing -> (ssm, Left OutputTypeMismatch)
+          Just o  -> ((SomeSM (SM f) s' _codec _init _stop), Right o)
 
 startSMInit :: Name -> SomeSM -> IO SomeSM
 startSMInit name (SomeSM _f _s _codec init _stop) = do

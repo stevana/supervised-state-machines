@@ -2,11 +2,12 @@
 
 module EventLoop where
 
-import Control.Exception
-import Control.Concurrent.MVar
 import Control.Concurrent.Async
+import Control.Concurrent.MVar
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TBQueue
+import Control.DeepSeq
+import Control.Exception
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS8
 import System.Timeout
@@ -35,7 +36,7 @@ eventLoop sup0 queue = do
       e <- atomically (readTBQueue queue)
       case e of
         Input name bs response -> do
-          r <- try (step name bs sup)
+          r <- try (evaluate (force (step name bs sup)))
           case r of
             Left (err :: SomeException) -> do
               -- putMVar response (BS8.pack (displayException err))

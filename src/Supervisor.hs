@@ -1,5 +1,10 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
+
 module Supervisor where
 
+import Control.DeepSeq
+import GHC.Generics (Generic)
 import Data.ByteString (ByteString)
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -13,8 +18,10 @@ data Supervisor = Supervisor
   { sChildren        :: [(Name, SomeSM)]
   , sRestartStrategy :: RestartStrategy
   }
+  deriving (Generic, NFData)
 
 data RestartStrategy = OneForOne | OneForAll | OneForRest
+  deriving (Generic, NFData)
 
 defaultGraceTimeMs :: Int
 defaultGraceTimeMs = 500
@@ -35,15 +42,17 @@ updateSM name ssm sup = sup { sChildren = update name ssm (sChildren sup) }
 
 ------------------------------------------------------------------------
 
-step :: Name -> ByteString -> Supervisor -> IO (Supervisor, Either StepError ByteString)
+step :: Name -> ByteString -> Supervisor -> (Supervisor, Either StepError ByteString)
 step name bs sup = case lookupSM name sup of
   ssm@(SomeSM _ _ codec _ _) -> case cDecode codec bs of
-    Nothing -> return (sup, Left (DecodeError bs))
-    Just i  -> do
-      (ssm', eo) <- stepSM i ssm
-      case eo of
-        Left err -> return (sup, Left err)
-        Right o  -> return (updateSM name ssm' sup, Right (cEncode codec o))
+    Nothing -> (sup, Left (DecodeError bs))
+    Just i  ->
+      let
+        (ssm', eo) = stepSM i ssm
+      in
+        case eo of
+          Left err -> (sup, Left err)
+          Right o  -> (updateSM name ssm' sup, Right (cEncode codec o))
 
 start :: Supervisor -> IO Supervisor
 start sup = do

@@ -1,18 +1,17 @@
 {-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module StateMachine where
 
-import Control.DeepSeq
-import Control.Exception
+import Control.DeepSeq (NFData, rnf)
 import Data.ByteString (ByteString)
 import Data.String (IsString)
-import Data.Typeable
+import Data.Typeable (Typeable, cast)
 import GHC.Generics (Generic)
-import System.Timeout
+import System.Timeout (timeout)
 
 import Codec
 
@@ -34,7 +33,7 @@ data SomeSM = forall s i o. (Typeable s, Typeable i, Typeable o, NFData s, NFDat
   }
 
 instance NFData SomeSM where
-  rnf (SomeSM _f s _codec _init _stop) = rnf s
+  rnf (SomeSM _f s _codec _init _terminate) = rnf s
 
 data StepError
   = InputTypeMismatch

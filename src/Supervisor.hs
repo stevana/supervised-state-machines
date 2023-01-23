@@ -53,7 +53,7 @@ step name bs sup = case lookupSM name sup of
 
 start :: Supervisor -> IO Supervisor
 start sup = do
-  children' <- mapM (\(name, ssm) -> startSMInit name ssm >>= \ssm' ->
+  children' <- mapM (\(name, ssm) -> startSM name ssm >>= \ssm' ->
                                      return (name, ssm'))
                     (sChildren sup)
   return sup { sChildren = children' }
@@ -64,12 +64,17 @@ restart nameOfFailedSM sup = case sRestartStrategy sup of
     ssm' <- restartSM nameOfFailedSM defaultGraceTimeMs (lookupSM nameOfFailedSM sup)
     return (updateSM nameOfFailedSM ssm' sup)
   OneForAll -> do
-    children' <- mapM (\(name, ssm) -> restartSM name defaultGraceTimeMs ssm >>= \ssm' ->
+    mapM_ (\(name, ssm) -> stopSM name defaultGraceTimeMs ssm)
+          (sChildren sup)
+    children' <- mapM (\(name, ssm) -> startSM name ssm >>= \ssm' ->
                                        return (name, ssm'))
                       (sChildren sup)
     return sup { sChildren = children' }
   RestForOne -> do
-    children' <- mapM (\(name, ssm) -> restartSM name defaultGraceTimeMs ssm >>= \ssm' ->
+    mapM_ (\(name, ssm) -> stopSM name defaultGraceTimeMs ssm >>= \ssm' ->
+                           return (name, ssm'))
+          (rest nameOfFailedSM sup)
+    children' <- mapM (\(name, ssm) -> startSM name ssm >>= \ssm' ->
                                        return (name, ssm'))
                       (rest nameOfFailedSM sup)
     return sup { sChildren = children' }

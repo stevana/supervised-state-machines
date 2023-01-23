@@ -54,19 +54,12 @@ stepSM mi ssm@(SomeSM (SM f) s _codec _init _terminate) =
           Nothing -> Left OutputTypeMismatch
           Just o  -> Right (SomeSM (SM f) s' _codec _init _terminate, o)
 
-startSMInit :: Name -> SomeSM -> IO SomeSM
-startSMInit name (SomeSM _f _s _codec init _stop) = do
+startSM :: Name -> SomeSM -> IO SomeSM
+startSM name (SomeSM _f _s _codec init _stop) = do
   ms <- init name
   case cast ms of
     Just s  -> return (SomeSM _f s _codec init _stop)
-    Nothing -> error "startSMInit: state type mismatch"
-
-startSM :: Typeable s => Name -> s -> SomeSM -> IO SomeSM
-startSM name ms (SomeSM _f _s _codec init _stop) = do
-  _s <- init name
-  case cast ms of
-    Just s  -> return (SomeSM _f s _codec init _stop)
-    Nothing -> error "startSM: state type mismatch"
+    Nothing -> error "startSMI: state type mismatch"
 
 stopSM :: Name -> Int -> SomeSM -> IO ()
 stopSM name graceTimeMs (SomeSM _f ms _codec _init terminate) = do
@@ -74,6 +67,6 @@ stopSM name graceTimeMs (SomeSM _f ms _codec _init terminate) = do
   return ()
 
 restartSM :: Name -> Int -> SomeSM -> IO SomeSM
-restartSM name graceTimeMs ssm@(SomeSM _f s _codec _init terminate) = do
+restartSM name graceTimeMs ssm@(SomeSM _f _s _codec _init terminate) = do
   stopSM name graceTimeMs ssm
-  startSM name s ssm
+  startSM name ssm

@@ -35,15 +35,14 @@ eventLoop sup0 queue = do
       e <- atomically (readTBQueue queue)
       case e of
         Input name bs response -> do
-          r <- try (evaluate (step name bs sup))
+          r <- try (step name bs sup)
           case r of
             Left (err :: SomeException) -> do
-              putStrLn "exception"
-              putMVar response (BS8.pack (displayException err))
-              putStrLn (displayException err)
+              -- putMVar response (BS8.pack (displayException err))
+              putStrLn (unName name ++ " threw: " ++ displayException err)
               sup' <- restart name sup
               go sup' queue
-            Right (sup', o) -> do
+            Right (sup', Right o) -> do
               putMVar response o
               go sup' queue
 
@@ -52,13 +51,20 @@ withEventLoop sup queue k = withAsync (eventLoop sup queue) $ \a -> do
   link a
   k
 
-call :: (Show i, Read o) => Name -> i -> TBQueue Event -> IO o
+data CallError = CallTimeout
+  deriving Show
+
+call :: Show i => Name -> i -> TBQueue Event -> IO (Either CallError String)
 call name i queue = do
+  putStrLn ("Calling " ++ unName name ++ ": " ++ show i)
   response <- newEmptyMVar
   atomically (writeTBQueue queue (Input name (BS8.pack (show i)) response))
   mr <- timeout 1000 (takeMVar response)
   case mr of
-    Nothing -> error "call: timed out"
-    Just r  -> case readMaybe (BS8.unpack r) of
-      Nothing -> error "call: couldn't read output"
-      Just o  -> return o
+    Nothing -> return (Left CallTimeout)
+    Just r  -> return (Right (BS8.unpack r))
+
+call_ :: (Show i) => Name -> i -> TBQueue Event -> IO ()
+call_ name i queue = do
+  _ <- call name i queue
+  return ()

@@ -29,7 +29,7 @@ library
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:    base ^>=4.15.1.0, stm, async, containers, bytestring
+    build-depends:    base ^>=4.15.1.0, stm, async, containers, bytestring, deepseq
     hs-source-dirs:   src
     default-language: Haskell2010
 

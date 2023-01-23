@@ -12,12 +12,12 @@ import EventLoop
 
 main :: IO ()
 main = do
-  let sup = Supervisor [("kv1", kvStore), ("kv2", kvStore)] OneForOne
+  let sup = Supervisor [("kv1", kvStore), ("kv2", kvStore), ("kv3", kvStore)] OneForRest
   queue <- newTBQueueIO 128
   withEventLoop sup queue $ do
-    call "kv1" (Store "x" 1) queue :: IO Output
-    call "kv1" (Lookup "crash") queue :: IO Output
-    r1 <- call "kv1" (Lookup "x") queue :: IO Output
+    call_ "kv2" (Store "x" 1) queue
+    call_ "kv2" (Lookup "crash") queue
+    r1 <- call "kv2" (Lookup "x") queue
     print r1
-    r2 <- call "kv1" (Lookup "y") queue :: IO Output
+    r2 <- call "kv2" (Lookup "y") queue
     print r2

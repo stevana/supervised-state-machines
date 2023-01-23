@@ -35,19 +35,19 @@ updateSM name ssm sup = sup { sChildren = update name ssm (sChildren sup) }
 
 ------------------------------------------------------------------------
 
-step :: Name -> ByteString -> Supervisor -> (Supervisor, ByteString)
+step :: Name -> ByteString -> Supervisor -> IO (Supervisor, Either StepError ByteString)
 step name bs sup = case lookupSM name sup of
   ssm@(SomeSM _ _ codec _ _) -> case cDecode codec bs of
-    Nothing -> error ("step: couldn't decode: " ++ show bs)
-    Just i  ->
-      let
-        (ssm', o) = stepSM i ssm
-      in
-        (updateSM name ssm' sup, cEncode codec o)
+    Nothing -> return (sup, Left (DecodeError bs))
+    Just i  -> do
+      (ssm', eo) <- stepSM i ssm
+      case eo of
+        Left err -> return (sup, Left err)
+        Right o  -> return (updateSM name ssm' sup, Right (cEncode codec o))
 
 start :: Supervisor -> IO Supervisor
 start sup = do
-  children' <- mapM (\(name, ssm) -> startSM name ssm >>= \ssm' ->
+  children' <- mapM (\(name, ssm) -> startSMInit name ssm >>= \ssm' ->
                                      return (name, ssm'))
                     (sChildren sup)
   return sup { sChildren = children' }
@@ -62,7 +62,11 @@ restart nameOfFailedSM sup = case sRestartStrategy sup of
                                        return (name, ssm'))
                       (sChildren sup)
     return sup { sChildren = children' }
-  OneForRest -> error "restart: not implemented yet"
+  OneForRest -> do
+    children' <- mapM (\(name, ssm) -> restartSM name defaultGraceTimeMs ssm >>= \ssm' ->
+                                       return (name, ssm'))
+                      (rest nameOfFailedSM sup)
+    return sup { sChildren = children' }
     where
       rest :: Name -> Supervisor -> [(Name, SomeSM)]
       rest name = dropWhile ((/= name) . fst) . sChildren

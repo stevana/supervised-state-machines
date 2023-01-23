@@ -42,17 +42,17 @@ data StepError
   deriving stock (Show, Generic)
   deriving anyclass NFData
 
-stepSM :: (Typeable i, Typeable o) => i -> SomeSM -> (SomeSM, Either StepError o)
-stepSM mi ssm@(SomeSM (SM f) s _codec _init _stop) =
+stepSM :: (Typeable i, Typeable o) => i -> SomeSM -> Either StepError (SomeSM, o)
+stepSM mi ssm@(SomeSM (SM f) s _codec _init _terminate) =
   case cast mi of
-    Nothing -> (ssm, Left InputTypeMismatch)
+    Nothing -> Left InputTypeMismatch
     Just i  ->
       let
         (s', mo) = f i s
       in
         case cast mo of
-          Nothing -> (ssm, Left OutputTypeMismatch)
-          Just o  -> ((SomeSM (SM f) s' _codec _init _stop), Right o)
+          Nothing -> Left OutputTypeMismatch
+          Just o  -> Right (SomeSM (SM f) s' _codec _init _terminate, o)
 
 startSMInit :: Name -> SomeSM -> IO SomeSM
 startSMInit name (SomeSM _f _s _codec init _stop) = do

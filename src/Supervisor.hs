@@ -42,17 +42,14 @@ updateSM name ssm sup = sup { sChildren = update name ssm (sChildren sup) }
 
 ------------------------------------------------------------------------
 
-step :: Name -> ByteString -> Supervisor -> (Supervisor, Either StepError ByteString)
+step :: Name -> ByteString -> Supervisor -> Either StepError (Supervisor, ByteString)
 step name bs sup = case lookupSM name sup of
   ssm@(SomeSM _ _ codec _ _) -> case cDecode codec bs of
-    Nothing -> (sup, Left (DecodeError bs))
+    Nothing -> Left (DecodeError bs)
     Just i  ->
-      let
-        (ssm', eo) = stepSM i ssm
-      in
-        case eo of
-          Left err -> (sup, Left err)
-          Right o  -> (updateSM name ssm' sup, Right (cEncode codec o))
+      case stepSM i ssm of
+        Left err        -> Left err
+        Right (ssm', o) -> Right (updateSM name ssm' sup, cEncode codec o)
 
 start :: Supervisor -> IO Supervisor
 start sup = do

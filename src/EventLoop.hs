@@ -43,7 +43,10 @@ eventLoop sup0 queue = do
               putStrLn (unName name ++ " threw: " ++ displayException err)
               sup' <- restart name sup
               go sup' queue
-            Right (sup', Right o) -> do
+            Right (Left err) -> do
+              print err
+              go sup queue
+            Right (Right (sup', o)) -> do
               putMVar response o
               go sup' queue
 

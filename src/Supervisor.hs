@@ -20,7 +20,7 @@ data Supervisor = Supervisor
   }
   deriving (Generic, NFData)
 
-data RestartStrategy = OneForOne | OneForAll | OneForRest
+data RestartStrategy = OneForOne | OneForAll | RestForOne
   deriving (Generic, NFData)
 
 defaultGraceTimeMs :: Int
@@ -68,7 +68,7 @@ restart nameOfFailedSM sup = case sRestartStrategy sup of
                                        return (name, ssm'))
                       (sChildren sup)
     return sup { sChildren = children' }
-  OneForRest -> do
+  RestForOne -> do
     children' <- mapM (\(name, ssm) -> restartSM name defaultGraceTimeMs ssm >>= \ssm' ->
                                        return (name, ssm'))
                       (rest nameOfFailedSM sup)

@@ -12,7 +12,7 @@ import EventLoop
 
 main :: IO ()
 main = do
-  let sup = Supervisor [("kv1", kvStore), ("kv2", kvStore), ("kv3", kvStore)] OneForRest
+  let sup = Supervisor [("kv1", kvStore), ("kv2", kvStore), ("kv3", kvStore)] RestForOne
   queue <- newTBQueueIO 128
   withEventLoop sup queue $ do
     call_ "kv2" (Store "x" 1) queue

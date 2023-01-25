@@ -1,3 +1,5 @@
+{-# LANGUAGE StrictData #-}
+
 module Codec where
 
 import Data.ByteString (ByteString)

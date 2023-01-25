@@ -1,15 +1,16 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE StrictData #-}
 
 module Example.KeyValueStore where
 
-import GHC.Generics (Generic)
+import Control.DeepSeq
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS8
 import Data.Map (Map)
 import qualified Data.Map as Map
+import GHC.Generics (Generic)
 import Text.Read
-import Control.DeepSeq
 
 import Codec
 import StateMachine

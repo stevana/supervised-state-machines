@@ -1,58 +1,57 @@
 cabal-version:      2.4
 name:               supervised-state-machines
 version:            0.0.0
+synopsis:
+  An experiment in implementing Erlang-style supervisor trees on a single thread.
 
--- A short (one-line) description of the package.
--- synopsis:
+description:
+  See README at <https://github.com/stevana/supervised-state-machines#readme>
 
--- A longer description of the package.
--- description:
-
--- A URL where users can report bugs.
--- bug-reports:
-
--- The license under which the package is released.
--- license:
+bug-reports:        https://github.com/stevana/supervised-state-machines/issues
+license:            BSD-2-Clause
 author:             Stevan Andjelkovic
 maintainer:         stevana@users.noreply.github.com
-
--- A copyright notice.
--- copyright:
--- category:
-extra-source-files: CHANGELOG.md, LICENSE
+copyright:          Copyright (c) 2023, Stevan Andjelkovic
+category:           Concurrency, Distributed Computing
+extra-source-files:
+  CHANGELOG.md
+  LICENSE
 
 library
-    exposed-modules:  StateMachine, Supervisor, EventLoop, Codec, Example.KeyValueStore
+  exposed-modules:
+    Codec
+    EventLoop
+    Example.KeyValueStore
+    StateMachine
+    Supervisor
 
-    -- Modules included in this library but not exported.
-    -- other-modules:
+  build-depends:
+    , async
+    , base        ^>=4.15.1.0
+    , bytestring
+    , containers
+    , deepseq
+    , stm
 
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-    build-depends:    base ^>=4.15.1.0, stm, async, containers, bytestring, deepseq
-    hs-source-dirs:   src
-    default-language: Haskell2010
+  hs-source-dirs:   src
+  default-language: Haskell2010
 
 executable kv
-    main-is:          Main.hs
+  main-is:          Main.hs
+  build-depends:
+    , base                       ^>=4.15.1.0
+    , stm
+    , supervised-state-machines
 
-    -- Modules included in this executable, other than Main.
-    -- other-modules:
-
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-    build-depends:
-        base ^>=4.15.1.0,
-        supervised-state-machines,
-        stm
-
-    hs-source-dirs:   app
-    default-language: Haskell2010
-    ghc-options:      -Wall -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs:   app
+  default-language: Haskell2010
+  ghc-options:      -Wall -threaded -rtsopts -with-rtsopts=-N
 
 test-suite test
-    default-language: Haskell2010
-    type:             exitcode-stdio-1.0
-    hs-source-dirs:   test
-    main-is:          MyLibTest.hs
-    build-depends:    base ^>=4.15.1.0
+  default-language: Haskell2010
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  main-is:          Main.hs
+  build-depends:
+    , base
+    , supervised-state-machines

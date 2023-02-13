@@ -138,7 +138,7 @@ There are many ways in which this repo can be extended, here are some ideas:
 
 - [ ] Add HTTP endpoint for writing to the event loop queue. (Hint: see the
       `HttpServer` and `EventLoop` modules of this
-      [repo](https://dl.acm.org/doi/10.1145/1238844.1238850)));
+      [repo](https://github.com/stevana/coroutine-state-machines)));
 - [ ] Save and restore the state of the example to disk in `terminate` and
       `init`;
 - [ ] Customisable shutdown grace time;

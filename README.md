@@ -14,22 +14,15 @@ that it's Erlang's *behaviours* rather than its lightweight processes and
 message passing.
 
 Behaviours can be thought of as generic building blocks for building reliable
-distributed systems.
-
-Erlang/OTP exposes six behaviours and encourages its users to compose them into
-bigger systems.
-
-The behaviours are generic in that they are parametrised by interfaces, the idea
-being that the user implements the interface in a problem specific way and then
-the user gets the generic component from Erlang/OTP.
-
-Typically the interface requires a sequential implementation while the generic
-component exposes a concurrent (or thread-safe) API, i.e. behaviours abstract
-away the low-level and difficult concurrent code which is difficult to get
-right.
-
-Joe Armstrong [describes](https://dl.acm.org/doi/10.1145/1238844.1238850) them
-as follows:
+distributed systems. Erlang/OTP exposes six behaviours and encourages its users
+to compose them into bigger systems. The behaviours are generic in that they are
+parametrised by interfaces, the idea being that the user implements the
+interface in a problem specific way and then the user gets the generic component
+from Erlang/OTP. Typically the interface requires a sequential implementation
+while the generic component exposes a concurrent (or thread-safe) API, i.e.
+behaviours abstract away the low-level and difficult concurrent code which is
+difficult to get right. Joe Armstrong
+[describes](https://dl.acm.org/doi/10.1145/1238844.1238850) them as follows:
 
 > Behaviors in Erlang can be thought of as parameterizable higher-order parallel
 > processes. They represent an extension of conventional higher-order functions
@@ -41,15 +34,12 @@ typically more complicated than manually dealing with index variables.
 
 This repo is an experiment in trying to implement two of these behaviours,
 namely `gen_server` and `supervisor`, without using lightweight
-processes/threads and message passing.
-
-I believe the last part about not using lightweight threads is a design space
-that hasn't been explored much yet.
-
-Most programming languages or libraries seem to start with the assumption that
-what makes Erlang great for writing reliable distributed systems is its
-lightweight threads and message passing, and they never even get to the point
-where they steal the structure of behaviours!
+processes/threads and message passing. I believe the last part about not using
+lightweight threads is a design space that hasn't been explored much yet. Most
+programming languages or libraries seem to start with the assumption that what
+makes Erlang great for writing reliable distributed systems is its lightweight
+threads and message passing, and they never even get to the point where they
+steal the structure of behaviours!
 
 ## How it works
 
@@ -65,13 +55,10 @@ output and a new updated state, i.e.:
 
 Client requests to the server will come in via the network, so we also need a
 `Codec` to be able to decode `ByteString`s into `input`s and encode `output`s
-into `ByteString`s to be able to reply to the client.
-
-We might also want to deserialise the initial state `state` from disk on startup
-and serialise it to disk on termination.
-
-See the `StateMachine` [module](src/StateMachine.hs) for the details of the
-above.
+into `ByteString`s to be able to reply to the client. We might also want to
+deserialise the initial state `state` from disk on startup and serialise it to
+disk on termination. See the `StateMachine` [module](src/StateMachine.hs) for
+the details of the above.
 
 ### Supervisor
 
@@ -80,10 +67,8 @@ according to some predetermined restart strategy in case a failure happens.
 
 Supervisors are organised in trees where generic servers (or more generally any
 other worker behaviours) are at the leaves and other supervisors are at the
-nodes.
-
-Since supervisors trees determine an order (depth-first) they can be used to
-deploy a system of generic servers.
+nodes. Since supervisors trees determine an order (depth-first) they can be used
+to deploy a system of generic servers.
 
 See the `Supervisor` [module](src/Supervisor.hs) for details.
 
@@ -102,9 +87,8 @@ appropriate restarts.
 ### Example
 
 As an example of generic server I've implemented a simple key value store in the
-`Example.KeyValueStore` [module](src/Example/KeyValueStore.hs).
-
-In [`app/Main.hs`](app/Main.hs) we start an event loop with a simple supervisor
+`Example.KeyValueStore` [module](src/Example/KeyValueStore.hs). In
+[`app/Main.hs`](app/Main.hs) we start an event loop with a simple supervisor
 tree containing the key value store:
 
 ```haskell
